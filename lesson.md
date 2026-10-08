@@ -151,37 +151,15 @@ System.out.println(isEven.test(4));  // true
 System.out.println(isEven.test(7));  // false
 ```
 
-**Passing a Predicate as a method argument:**
-
-A Predicate isn't just for testing values directly — you can also pass it into a method as an argument, the same way you'd pass an `int` or a `String`. The method just needs a parameter of type `Predicate<T>`:
-
-```java
-public static void checkNumber(int number, Predicate<Integer> condition) {
-    System.out.println(condition.test(number));
-}
-
-// Passing isEven as the argument
-checkNumber(4, isEven); // true
-checkNumber(7, isEven); // false
-```
-
-**More examples:**
-
-```java
-
-// Check if a number is positive
-Predicate<Integer> isPositive = num -> num > 0;
-System.out.println(isPositive.test(10));  // true
-System.out.println(isPositive.test(-5));  // false
-```
-
 **Passing different behaviors to the same method:**
 
-The real power of passing a Predicate as an argument is that the *same method* can behave differently depending on which Predicate you hand it. The method stays generic — the rule comes from outside.
+A Predicate isn't just for testing values directly — you can pass it into a method as an argument, the same way you'd pass an `int` or a `String`. The method just needs a parameter of type `Predicate<T>`.
+
+The real power of this is that the *same method* behaves differently depending on which Predicate you hand it. The method stays generic — the rule comes from outside.
 
 ```java
-public static void checkString(String str, Predicate<String> isLengthy) {
-    System.out.println(isLengthy.test(str));
+public static void checkString(String str, Predicate<String> condition) {
+    System.out.println(condition.test(str));
 }
 ```
 
@@ -225,16 +203,20 @@ System.out.println(getLength.apply("Hello")); // 5
 System.out.println(getLength.apply("Java"));  // 4
 ```
 
-**More examples:**
+Like Predicate, a Function can be passed into a method, and different Functions give different results from the same method:
 
 ```java
-// Convert string to uppercase
-Function<String, String> toUpper = str -> str.toUpperCase();
-System.out.println(toUpper.apply("hello")); // HELLO
+public static void convert(String str, Function<String, String> converter) {
+    System.out.println(converter.apply(str));
+}
+```
 
-// Double a number
-Function<Integer, Integer> doubleIt = n -> n * 2;
-System.out.println(doubleIt.apply(5)); // 10
+```java
+Function<String, String> toUpper = str -> str.toUpperCase();
+Function<String, String> toLower = str -> str.toLowerCase();
+
+convert("Hello World", toUpper); // HELLO WORLD
+convert("Hello World", toLower); // hello world
 ```
 
 #### 3. Consumer\<T\> - Performing Actions
@@ -246,16 +228,6 @@ System.out.println(doubleIt.apply(5)); // 10
 ```java
 import java.util.function.Consumer;
 
-// Takes a string and prints it
-Consumer<String> printer = message -> System.out.println(message);
-
-printer.accept("Hello, World!"); // Hello, World!
-printer.accept("Java is fun!");  // Java is fun!
-```
-
-**Use with collections:**
-
-```java
 ArrayList<String> names = new ArrayList<>(Arrays.asList("Alice", "Bob", "Charlie"));
 
 // Print each name with a greeting
@@ -283,18 +255,6 @@ System.out.println(greetingSupplier.get()); // Hello
 System.out.println(greetingSupplier.get()); // Hello
 ```
 
-**More examples:**
-
-```java
-// Generate random number
-Supplier<Double> randomSupplier = () -> Math.random();
-System.out.println(randomSupplier.get()); // Random number
-
-// Get current time
-Supplier<Long> timeSupplier = () -> System.currentTimeMillis();
-System.out.println(timeSupplier.get()); // Current timestamp
-```
-
 ### Summary of Common Functional Interfaces
 
 | Interface | Input | Output | Method | Use Case | Example |
@@ -303,6 +263,8 @@ System.out.println(timeSupplier.get()); // Current timestamp
 | `Function<T,R>` | T | R | `apply(T t)` | Transforming data | Convert string to uppercase |
 | `Consumer<T>` | T | void | `accept(T t)` | Performing actions | Print each item |
 | `Supplier<T>` | none | T | `get()` | Providing values | Generate random number |
+
+> **Coming up in Part 4**: `Predicate` powers `filter()`, `Function` powers `map()`, and `Consumer` powers `forEach()`. These four interfaces are the building blocks of the Stream API.
 
 ### Creating Your Own Functional Interface
 
@@ -332,6 +294,8 @@ public class LearnFunctionalProgramming {
 **The `@FunctionalInterface` annotation** is optional but recommended because:
 - It documents that this interface is meant for lambda expressions
 - The compiler will give an error if you accidentally add a second abstract method
+
+> **Note**: A functional interface can have only **one abstract method**, but it can have any number of `default` methods, `static` methods, and constants. Only abstract methods are limited — because the lambda needs to know which single method it is filling in.
 
 ### 🧑‍💻 Quick Activity: Functional Interfaces Practice
 
@@ -363,32 +327,6 @@ Try these exercises:
 
 ## Part 3 - Lambda Expressions
 
-### What Problem Do Lambdas Solve?
-
-Now that you understand functional interfaces, you know that Java needs a way to pass behavior as a value. Before Java 8, you had to create entire classes or use verbose anonymous classes to do this.
-
-**Example problem**: You want to print each item in a list.
-
-**Old way (verbose):**
-
-```java
-ArrayList<String> names = new ArrayList<>(Arrays.asList("Alice", "Bob", "Charlie"));
-
-for (int i = 0; i < names.size(); i++) {
-    System.out.println(names.get(i));
-}
-```
-
-This works, but you're focused on **how** to loop rather than **what** you want to do.
-
-**With Lambda (concise):**
-
-```java
-names.forEach(name -> System.out.println(name));
-```
-
-Now you're just saying: "For each name, print it". Much clearer!
-
 ### What Exactly is a Lambda Expression?
 
 A **lambda expression** is a short way to write a function without giving it a name. It's also called an **anonymous function**. It is how you fulfill the contract of a functional interface in the shortest possible way.
@@ -417,9 +355,9 @@ Let's break this down:
 
 **Read it as**: "name goes to print name"
 
-### Different Lambda Formats
+### The Four Lambda Formats
 
-Here is the full working code showing all lambda formats:
+Here is the full working code showing all four formats:
 
 ```java
 import java.util.ArrayList;
@@ -438,17 +376,17 @@ public class LearnFunctionalProgramming {
         Runnable task = () -> System.out.println("Task is running");
         task.run(); // Output: Task is running
 
-        // ── Format 2: One parameter ──
+        // ── Format 2: One parameter (parentheses optional) ──
         ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
         numbers.forEach(num -> System.out.println(num * 2));
         // Output: 2, 4, 6, 8, 10
 
-        // ── Format 3: Multiple parameters ──
+        // ── Format 3: Multiple parameters (parentheses required) ──
         ArrayList<String> names = new ArrayList<>(Arrays.asList("Alice", "Bob", "Charlie"));
         Collections.sort(names, (a, b) -> a.length() - b.length());
         System.out.println(names); // [Bob, Alice, Charlie]
 
-        // ── Format 4: Multiple statements ──
+        // ── Format 4: Multiple statements (braces + explicit return) ──
         Calculator sumWithPrint = (x, y) -> {
             int sum = x + y;
             System.out.println("Sum is: " + sum);
@@ -460,65 +398,57 @@ public class LearnFunctionalProgramming {
 }
 ```
 
-#### Format 1: No parameters
+**The key thing to remember about Format 4:**
 
-When you don't need any input:
-
-```java
-() -> System.out.println("Hello!")
-```
-
-**Read as**: "Nothing goes to print Hello"
-
-#### Format 2: One parameter (parentheses optional)
+A single-expression lambda returns its value **automatically** — no `return` keyword needed:
 
 ```java
-// With parentheses
-(x) -> x * 2
-
-// Without parentheses (cleaner)
-x -> x * 2
+(a, b) -> a + b        // returns a + b automatically
 ```
 
-#### Format 3: Multiple parameters
-
-```java
-(a, b) -> a + b
-```
-
-**Read as**: "a and b go to a plus b"
-
-#### Format 4: Multiple statements (need curly braces)
+The moment you add curly braces, that stops. You must write `return` yourself:
 
 ```java
 (x, y) -> {
     int sum = x + y;
     System.out.println("Sum is: " + sum);
-    return sum;
+    return sum;        // required
 }
 ```
 
-### Understanding the Arrow ->
+### Important Rule: You Cannot Change an Outside Variable
 
-The arrow `->` is the key symbol in lambda expressions. Think of it as:
-- "becomes"
-- "goes to"
-- "transforms into"
+A lambda can **read** a variable from outside, but it cannot **change** it:
 
 ```java
-x -> x * 2                  // x becomes x times 2
-name -> name.toUpperCase()  // name becomes uppercase name
-(a, b) -> a + b             // a and b become their sum
+int count = 0;
+names.forEach(name -> count++);   // COMPILE ERROR
 ```
+
+Error: *"local variables referenced from a lambda expression must be final or effectively final"*
+
+Reading is fine:
+
+```java
+int multiplier = 3;   // never changed after this line
+numbers.forEach(n -> System.out.println(n * multiplier));  // works
+```
+
+**Why**: a lambda might run later, or on a different thread, when that variable no longer exists. Java takes a copy of the value and locks it. If you need a counter, use a normal loop.
 
 ### When to Use Lambdas
 
 ✅ **Use lambdas when:**
 - You need to pass simple behavior to a method
-- The function is used only once
+- The function is used only once, in that one place
 - It makes your code clearer and shorter
 
-> **Note**: You've already been writing lambdas throughout Part 2 to fill in your functional interfaces, and you'll get more practice with them in the Stream activity coming up — so there's no separate lambda exercise here.
+❌ **Write a proper named method instead when:**
+- The logic is more than a few lines
+- You need the same behavior in several places
+- You want to unit test it, or you need a readable name in error messages
+
+> **Note**: You've already been writing lambdas throughout Part 2, and you'll get more practice in the Stream activity coming up — so there's no separate lambda exercise here.
 
 ---
 
@@ -531,49 +461,14 @@ A **Stream** is like a pipeline for processing data. Imagine a conveyor belt in 
 - They go through various stations (filtering, transforming, sorting)
 - Final products come out at the other end
 
-A Stream is **not** a data structure. It doesn't store data. It's a **pipeline** of operations on data.
-
-### Why Use Streams?
-
-**Old way** (imperative - tell computer HOW to do it):
-
-```java
-ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
-ArrayList<Integer> evenNumbers = new ArrayList<>();
-
-for (int num : numbers) {
-    if (num % 2 == 0) {
-        evenNumbers.add(num);
-    }
-}
-
-System.out.println(evenNumbers); // [2, 4, 6, 8, 10]
-```
-
-**New way** (declarative - tell computer WHAT you want):
-
-```java
-import java.util.stream.Collectors;
-
-List<Integer> evenNumbers = numbers.stream()
-    .filter(num -> num % 2 == 0)
-    .collect(Collectors.toList());
-
-System.out.println(evenNumbers); // [2, 4, 6, 8, 10]
-```
-
-**Benefits:**
-- More readable — reads like English
-- Less code — no manual loops
-- Fewer bugs — can't mess up loop conditions
-- Easy to modify — just add more operations
+A Stream is **not** a data structure. It doesn't store data. The data stays in your original list — the stream only holds the **instructions** and pulls items through when asked.
 
 ### How Streams Work
 
 Streams work in three steps:
 
 1. **Create** a stream from a data source
-2. **Transform** the data with intermediate operations (filter, map, sort, etc.)
+2. **Transform** the data with intermediate operations (filter, map, sorted, etc.)
 3. **Collect** or use the results with a terminal operation
 
 ```
@@ -582,36 +477,19 @@ Data Source → Intermediate Operations → Terminal Operation → Result
 
 ### Creating Streams
 
-Here is the full working code for creating streams:
-
 ```java
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
-public class LearnFunctionalProgramming {
-    public static void main(String[] args) {
-
-        // Method 1: From a collection
-        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
-        Stream<String> nameStream = names.stream();
-
-        // Method 2: From an array
-        String[] nameArray = {"Alice", "Bob", "Charlie"};
-        Stream<String> arrayStream = Arrays.stream(nameArray);
-
-        // Method 3: Using Stream.of()
-        Stream<Integer> numberStream = Stream.of(1, 2, 3, 4, 5);
-
-    }
-}
+// Method 1: From a collection (the common one)
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+Stream<String> nameStream = names.stream();
 ```
+
+You can also create a stream from an array using `Arrays.stream(myArray)`, or from loose values using `Stream.of(1, 2, 3)`. In practice you'll use `.stream()` on a collection almost every time.
 
 ### Stream Operations: Two Types
 
 #### 1. Intermediate Operations
 - **Return** a new stream
-- Are **lazy** (don't execute until terminal operation is called)
+- Are **lazy** (don't execute until a terminal operation is called)
 - Can be **chained** together
 - Examples: `filter()`, `map()`, `sorted()`
 
@@ -620,6 +498,8 @@ public class LearnFunctionalProgramming {
 - Return a **result** or cause a side effect
 - Can only be used **once** on a stream
 - Examples: `collect()`, `forEach()`, `count()`
+
+> **Important**: You can chain as many intermediate operations as you like, but only **one terminal operation**, at the end. Once it runs, the stream is used up.
 
 ### Important: Streams are Lazy
 
@@ -646,34 +526,22 @@ stream.forEach(name -> System.out.println("Result: " + name));
 // Filtering: Charlie
 ```
 
+Notice the order of that output: elements flow through the pipeline **one at a time**. Alice goes through filter, then straight to the result — *then* Bob starts. It is not "filter the whole list, then print the whole list."
+
 ### Intermediate Operations
 
 #### filter() - Keep Only What You Want
 
-**What it does**: Keeps elements that match a condition (Predicate)
+**What it does**: Keeps elements that match a condition (a Predicate)
 
 ```java
 List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
-// Get only even numbers
 List<Integer> evenNumbers = numbers.stream()
     .filter(n -> n % 2 == 0)
     .collect(Collectors.toList());
 
 System.out.println(evenNumbers); // [2, 4, 6, 8, 10]
-```
-
-**More examples:**
-
-```java
-List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "Alex");
-
-// Get names starting with 'A'
-List<String> aNames = names.stream()
-    .filter(name -> name.startsWith("A"))
-    .collect(Collectors.toList());
-
-System.out.println(aNames); // [Alice, Alex]
 ```
 
 #### map() - Transform Each Element
@@ -683,25 +551,11 @@ System.out.println(aNames); // [Alice, Alex]
 ```java
 List<String> names = Arrays.asList("alice", "bob", "charlie");
 
-// Convert all names to uppercase
 List<String> upperNames = names.stream()
     .map(name -> name.toUpperCase())
     .collect(Collectors.toList());
 
 System.out.println(upperNames); // [ALICE, BOB, CHARLIE]
-```
-
-**More examples:**
-
-```java
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-
-// Square each number
-List<Integer> squared = numbers.stream()
-    .map(n -> n * n)
-    .collect(Collectors.toList());
-
-System.out.println(squared); // [1, 4, 9, 16, 25]
 ```
 
 #### sorted() - Arrange in Order
@@ -711,14 +565,14 @@ System.out.println(squared); // [1, 4, 9, 16, 25]
 ```java
 List<Integer> numbers = Arrays.asList(5, 2, 8, 1, 9, 3);
 
-// Sort in ascending order
+// Natural order (ascending)
 List<Integer> sorted = numbers.stream()
     .sorted()
     .collect(Collectors.toList());
 
 System.out.println(sorted); // [1, 2, 3, 5, 8, 9]
 
-// Sort in descending order
+// Descending, using a Comparator
 List<Integer> descending = numbers.stream()
     .sorted((a, b) -> b - a)
     .collect(Collectors.toList());
@@ -726,67 +580,40 @@ List<Integer> descending = numbers.stream()
 System.out.println(descending); // [9, 8, 5, 3, 2, 1]
 ```
 
+> **Comparator rule**: `a - b` gives ascending (small to big). `b - a` gives descending (big to small).
+
 ### Terminal Operations
 
 #### collect() - Gather Results
 
-**What it does**: Converts stream back into a collection
+**What it does**: Converts the stream back into a collection
 
 ```java
 import java.util.stream.Collectors;
 
-List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+List<String> names = Arrays.asList("Alice", "Bob", "Alice", "Charlie");
 
-// Collect to List
+// Collect to List - keeps duplicates and order
 List<String> nameList = names.stream()
     .collect(Collectors.toList());
 
-// Collect to Set (removes duplicates)
+// Collect to Set - removes duplicates
 Set<String> nameSet = names.stream()
     .collect(Collectors.toSet());
 ```
 
-#### Collecting into a Map
-
-You can also collect a stream into a `Map` — you just tell Java what the **key** should be and what the **value** should be.
-
-```java
-import java.util.Map;
-import java.util.stream.Collectors;
-
-List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
-
-// Key = the name, Value = the length of the name
-Map<String, Integer> nameLengths = names.stream()
-    .collect(Collectors.toMap(
-        name -> name,           // how to build the key
-        name -> name.length()   // how to build the value
-    ));
-
-System.out.println(nameLengths); // {Bob=3, Alice=5, Charlie=7}
-```
-
-`Collectors.toMap()` takes two functions — the first decides the **key**, the second decides the **value**. Java runs both on every element and builds the map for you.
-
-> **Note**: Keys must be unique. If two elements produce the same key, Java throws an error — so pick something unique as your key (like an ID or a name).
-
----
-
-### forEach() - Do Something With Each Element
+#### forEach() - Do Something With Each Element
 
 **What it does**: Performs an action on each element
 
 ```java
 List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
 
-// Print each name
-names.stream()
-    .forEach(name -> System.out.println(name));
-
-// Print with formatting
 names.stream()
     .forEach(name -> System.out.println("Hello, " + name + "!"));
 ```
+
+> **Note**: `forEach` produces nothing. It is for *doing* something (printing, logging, saving). If you want changed data back, use `map()` then `collect()`.
 
 #### count() - Count Elements
 
@@ -795,7 +622,6 @@ names.stream()
 ```java
 List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
-// Count even numbers
 long count = numbers.stream()
     .filter(n -> n % 2 == 0)
     .count();
@@ -810,7 +636,6 @@ The real power of streams comes from chaining operations together:
 ```java
 List<String> names = Arrays.asList("alice", "BOB", "Charlie", "DAVID", "eve");
 
-// Complex pipeline
 List<String> result = names.stream()
     .filter(name -> name.length() > 3)     // Only names with 4+ letters (removes "BOB" and "eve")
     .map(n -> n.toLowerCase())             // Convert to lowercase
@@ -820,41 +645,7 @@ List<String> result = names.stream()
 System.out.println(result); // [alice, charlie, david]
 ```
 
-### Common Stream Patterns
-
-#### Pattern 1: Filter → Collect
-
-```java
-List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "Alex", "Diana");
-
-List<String> aNames = names.stream()
-    .filter(name -> name.startsWith("A"))
-    .collect(Collectors.toList());
-// [Alice, Alex]
-```
-
-#### Pattern 2: Map → Collect
-
-```java
-List<String> words = Arrays.asList("cat", "dog", "bird");
-
-List<Integer> lengths = words.stream()
-    .map(word -> word.length())
-    .collect(Collectors.toList());
-// [3, 3, 4]
-```
-
-#### Pattern 3: Filter → Map → Collect
-
-```java
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-
-List<Integer> result = numbers.stream()
-    .filter(n -> n % 2 == 0)    // Get even numbers
-    .map(n -> n * n)             // Square them
-    .collect(Collectors.toList());
-// [4, 16, 36, 64, 100]
-```
+> **Order matters**: put `filter()` before `map()` so you only transform the elements that survive. Be aware that order can also change the **result**, not just the speed — mapping to uppercase before filtering for names starting with "A" would catch a lowercase "alice", but filtering first would miss it.
 
 ### 🧑‍💻 Quick Activity: Stream Practice
 
@@ -874,11 +665,13 @@ Try these exercises:
 
 ---
 
-## Part 5 - Method References (Optional / Exposure Only)
+## Part 5 - Extras (Optional / Self-Study)
 
-> This section is optional. It's here purely to give you exposure to a syntax shortcut you may encounter in other people's code — there is no activity for this part.
+> This section is optional. It gives you exposure to things you may meet in other people's code. There is no activity for this part.
 
-Method references are an even shorter way to write a lambda **when the lambda only calls a single existing method**, using the `::` operator.
+### Method References
+
+Method references are a shorter way to write a lambda **when the lambda only calls a single existing method**, using the `::` operator.
 
 ```java
 // Lambda
@@ -888,9 +681,37 @@ names.forEach(name -> System.out.println(name));
 names.forEach(System.out::println);
 ```
 
-**Simple rule**: whenever your lambda looks like `x -> someMethod(x)`, you can usually replace it with `someClass::someMethod`. Java infers that `x` is coming from the stream/list and passes it automatically — you don't need to write it yourself.
+**Simple rule**: whenever your lambda looks like `x -> someMethod(x)`, you can usually replace it with `someClass::someMethod`. Java passes the item automatically. If your lambda does anything extra — like `name -> System.out.println("Hi " + name)` — the shortcut does not apply.
 
-That's all you need to know for now — if you see `::` in other people's code, you'll know what it's doing.
+### Collecting into a Map
+
+You can collect a stream into a `Map` by telling Java what the **key** and the **value** should be.
+
+```java
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+Map<String, Integer> nameLengths = names.stream()
+    .collect(Collectors.toMap(
+        name -> name,           // how to build the key
+        name -> name.length()   // how to build the value
+    ));
+
+System.out.println(nameLengths); // {Bob=3, Alice=5, Charlie=7}
+```
+
+Keys must be unique — if two elements produce the same key, Java throws an error.
+
+### Parallel Streams
+
+Swapping `.stream()` for `.parallelStream()` splits the work across multiple CPU cores:
+
+```java
+List<String> result = names.parallelStream()
+    .filter(n -> n.length() > 4)
+    .collect(Collectors.toList());
+```
+
+This works safely **because** functional code doesn't change shared data — each element is processed independently. Only worth it for large amounts of data; on small lists it is actually slower, because splitting and coordinating the work costs more than it saves.
 
 ---
 
