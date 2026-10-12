@@ -572,8 +572,6 @@ System.out.println(sorted); // [1, 2, 3, 5, 8, 9]
 
 ```
 
-> **Comparator rule**: `a - b` gives ascending (small to big). `b - a` gives descending (big to small).
-
 ### Terminal Operations
 
 #### collect() - Gather Results
