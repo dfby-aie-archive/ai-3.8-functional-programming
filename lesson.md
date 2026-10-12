@@ -560,8 +560,6 @@ System.out.println(upperNames); // [ALICE, BOB, CHARLIE]
 
 #### sorted() - Arrange in Order
 
-**What it does**: Sorts elements in natural order or using a Comparator
-
 ```java
 List<Integer> numbers = Arrays.asList(5, 2, 8, 1, 9, 3);
 
@@ -572,12 +570,6 @@ List<Integer> sorted = numbers.stream()
 
 System.out.println(sorted); // [1, 2, 3, 5, 8, 9]
 
-// Descending, using a Comparator
-List<Integer> descending = numbers.stream()
-    .sorted((a, b) -> b - a)
-    .collect(Collectors.toList());
-
-System.out.println(descending); // [9, 8, 5, 3, 2, 1]
 ```
 
 > **Comparator rule**: `a - b` gives ascending (small to big). `b - a` gives descending (big to small).
@@ -683,23 +675,7 @@ names.forEach(System.out::println);
 
 **Simple rule**: whenever your lambda looks like `x -> someMethod(x)`, you can usually replace it with `someClass::someMethod`. Java passes the item automatically. If your lambda does anything extra — like `name -> System.out.println("Hi " + name)` — the shortcut does not apply.
 
-### Collecting into a Map
 
-You can collect a stream into a `Map` by telling Java what the **key** and the **value** should be.
-
-```java
-List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
-
-Map<String, Integer> nameLengths = names.stream()
-    .collect(Collectors.toMap(
-        name -> name,           // how to build the key
-        name -> name.length()   // how to build the value
-    ));
-
-System.out.println(nameLengths); // {Bob=3, Alice=5, Charlie=7}
-```
-
-Keys must be unique — if two elements produce the same key, Java throws an error.
 
 ### Parallel Streams
 
